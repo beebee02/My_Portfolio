@@ -27,10 +27,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
 
       - name: Install Dependencies
-        run: npm ci --legacy-peer-deps
+        # Using npm install handles the lockfile version mismatches smoothly
+        run: npm install --legacy-peer-deps 
 
       - name: Build Project
         run: npm run build
@@ -38,7 +38,7 @@ jobs:
       - name: Upload Production Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist' # <-- Standard Vite build folder!
+          path: './dist' 
 
       - name: Deploy to GitHub Pages
         id: deployment
