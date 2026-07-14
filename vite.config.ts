@@ -12,8 +12,8 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
-  // Pass additional inner configuration parameters safely here
+  // SAFE INJECTION POINT FOR ADDITIONAL CONFIG
   vite: {
-    base: "https://beebee02.github.io/data-brutalist/", // Make sure to replace this with your exact GitHub repository name!
+    base: "/My_Portfolio/", // <-- Added opening and closing slashes here!
   }
 });
