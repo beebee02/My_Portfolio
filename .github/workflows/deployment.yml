@@ -30,18 +30,15 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
-      - name: Build Project for GitHub Pages
-        # This compiles the app into static pre-rendered HTML/JS assets
+      - name: Build Project
         run: npm run build
-        env:
-          NITRO_PRESET: github_pages
 
       - name: Upload Production Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './.output/public'
+          path: './dist' # <-- Standard Vite build folder!
 
       - name: Deploy to GitHub Pages
         id: deployment
