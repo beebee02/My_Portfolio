@@ -1,9 +1,36 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { Component, ErrorInfo, lazy, ReactNode, Suspense, useEffect, useRef, useState } from "react";
 
+// Safe Lazy Load of the Shard
 const ObsidianShard = lazy(() =>
   import("@/components/ObsidianShard").then((m) => ({ default: m.ObsidianShard })),
 );
+
+// --- Crash-Proof Error Boundary ---
+class SafeComponentBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  public state = { hasError: false };
+
+  public static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.warn("ObsidianShard failed to render, using fallback CSS Shard:", error, errorInfo);
+  }
+
+  public render() {
+    if (this.state.hasError) {
+      return (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-64 h-96 bg-gradient-to-br from-zinc-800/20 via-zinc-900/40 to-black/80 border border-zinc-700/30 rounded-2xl backdrop-blur-md shadow-2xl animate-float-1 rotate-12 flex items-center justify-center">
+            <span className="font-mono text-[9px] text-zinc-500 uppercase tracking-widest">[ CSS_SHARD_ACTIVE ]</span>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function useMounted() {
   const [m, setM] = useState(false);
@@ -31,6 +58,15 @@ export const Route = createFileRoute("/")({
   }),
 });
 
+// Smooth scroll helper
+const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+  e.preventDefault();
+  const element = document.getElementById(targetId);
+  if (element) {
+    element.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+};
+
 function Nav({ unlocked }: { unlocked: boolean }) {
   if (!unlocked) return null;
   return (
@@ -41,13 +77,14 @@ function Nav({ unlocked }: { unlocked: boolean }) {
         </span>
         <span className="hidden h-4 w-px bg-border sm:inline-block" />
         {[
-          { label: "WORKS", href: "#works" },
-          { label: "THE STACK", href: "#stack" },
-          { label: "INITIATE", href: "#initiate" },
+          { label: "WORKS", href: "works" },
+          { label: "THE STACK", href: "stack" },
+          { label: "INITIATE", href: "initiate" },
         ].map((i) => (
           <a
             key={i.label}
-            href={i.href}
+            href={`#${i.href}`}
+            onClick={(e) => handleSmoothScroll(e, i.href)}
             className="group relative rounded-full px-4 py-1.5 font-mono-tight text-[11px] uppercase tracking-widest text-foreground/80 transition-colors hover:text-accent"
           >
             {i.label}
@@ -277,19 +314,17 @@ function RetroDinoGame() {
           </div>
         ) : null}
 
-      <div 
-  className="absolute font-bold text-accent font-mono text-[12px] transition-all duration-300 ease-out z-10"
-  // transform: scaleX(-1) flips the emoji horizontally. 
-  // If your emoji was already facing left, this will make it face right.
-  style={{ 
-    bottom: isJumping ? "40px" : "6px", 
-    left: "25px", 
-    transform: "scaleX(-1)",
-    display: "inline-block" 
-  }}
->
-  🦖
-</div>
+        <div 
+          className="absolute font-bold text-accent font-mono text-[12px] transition-all duration-300 ease-out z-10"
+          style={{ 
+            bottom: isJumping ? "40px" : "6px", 
+            left: "25px", 
+            transform: "scaleX(-1)",
+            display: "inline-block" 
+          }}
+        >
+          🦖
+        </div>
 
         <div 
           className="absolute font-bold text-destructive font-mono text-[11px]"
@@ -324,11 +359,14 @@ function Hero({ unlocked }: { unlocked: boolean }) {
 
   return (
     <section className="relative min-h-screen w-full overflow-hidden pt-32 pb-16 flex flex-col justify-between">
+      {/* RESTORED BACKGROUND OBSIDIAN SHARD */}
       <div className="absolute inset-0 z-0 cursor-grab active:cursor-grabbing">
         {useMounted() && (
-          <Suspense fallback={null}>
-            <ObsidianShard />
-          </Suspense>
+          <SafeComponentBoundary>
+            <Suspense fallback={null}>
+              <ObsidianShard />
+            </Suspense>
+          </SafeComponentBoundary>
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/10 to-background" />
       </div>
@@ -358,7 +396,8 @@ function Hero({ unlocked }: { unlocked: boolean }) {
         </h1>
 
         <div className="mt-10 grid grid-cols-12 gap-6 border-t border-border pt-8 opacity-100 translate-y-0">
-          <div className="col-span-12 md:col-span-3 flex flex-col justify-between">
+          {/* Left Column: Title & Custom Floating Icons */}
+          <div className="col-span-12 md:col-span-3 flex flex-col justify-between min-h-[260px]">
             <div>
               <p className="font-mono-tight text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
                 // PRACTICE
@@ -369,19 +408,75 @@ function Hero({ unlocked }: { unlocked: boolean }) {
               </p>
             </div>
             
-            <div className="mt-6 w-24 h-24 text-accent/80 opacity-90 animate-pulse">
-              <svg viewBox="0 0 100 100" fill="currentColor" className="w-full h-full">
-                <circle cx="35" cy="35" r="14" />
-                <path d="M35 55c-15 0-25 10-25 22v5h50v-5c0-12-10-22-25-22z" />
-                <rect x="68" y="30" width="8" height="52" />
-                <rect x="80" y="15" width="8" height="67" />
-                <rect x="56" y="45" width="8" height="37" />
-                <path d="M52 42 l14-12 l12 12 l12-18" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="52" cy="42" r="3" />
-                <circle cx="66" cy="30" r="3" />
-                <circle cx="78" cy="42" r="3" />
-                <circle cx="90" cy="24" r="3" />
-              </svg>
+            {/* Extended Tech Stack Vector Grid */}
+            <div className="grid grid-cols-3 gap-y-4 gap-x-2 mt-8 pb-4 max-w-[280px]">
+              {/* Pandas */}
+              <div className="animate-float-1 flex flex-col items-center group cursor-pointer">
+                <div className="w-11 h-11 rounded-xl bg-background border border-border/80 flex items-center justify-center text-foreground hover:border-accent hover:text-accent transition-colors duration-300">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                    <circle cx="12" cy="12" r="10" />
+                    <circle cx="8" cy="10" r="1.5" fill="currentColor" />
+                    <circle cx="16" cy="10" r="1.5" fill="currentColor" />
+                    <path d="M12 14c-1.5 0-2 1-2 2h4c0-1-.5-2-2-2z" />
+                  </svg>
+                </div>
+                <span className="font-mono text-[7px] text-muted-foreground mt-1 group-hover:text-accent transition-colors">PANDAS</span>
+              </div>
+
+              {/* XGBoost */}
+              <div className="animate-float-2 flex flex-col items-center group cursor-pointer">
+                <div className="w-11 h-11 rounded-xl bg-background border border-border/80 flex items-center justify-center text-foreground hover:border-accent hover:text-accent transition-colors duration-300">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </div>
+                <span className="font-mono text-[7px] text-muted-foreground mt-1 group-hover:text-accent transition-colors">XGBOOST</span>
+              </div>
+
+              {/* PyTorch */}
+              <div className="animate-float-3 flex flex-col items-center group cursor-pointer">
+                <div className="w-11 h-11 rounded-xl bg-background border border-border/80 flex items-center justify-center text-foreground hover:border-accent hover:text-accent transition-colors duration-300">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                  </svg>
+                </div>
+                <span className="font-mono text-[7px] text-muted-foreground mt-1 group-hover:text-accent transition-colors">PYTORCH</span>
+              </div>
+
+              {/* Google Colab */}
+              <div className="animate-float-4 flex flex-col items-center group cursor-pointer">
+                <div className="w-11 h-11 rounded-xl bg-background border border-border/80 flex items-center justify-center text-foreground hover:border-accent hover:text-accent transition-colors duration-300">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                    <circle cx="8" cy="12" r="3" />
+                    <circle cx="16" cy="12" r="3" />
+                    <path d="M10 12h4" />
+                  </svg>
+                </div>
+                <span className="font-mono text-[7px] text-muted-foreground mt-1 group-hover:text-accent transition-colors">COLAB</span>
+              </div>
+
+              {/* Scikit Learn */}
+              <div className="animate-float-1 flex flex-col items-center group cursor-pointer">
+                <div className="w-11 h-11 rounded-xl bg-background border border-border/80 flex items-center justify-center text-foreground hover:border-accent hover:text-accent transition-colors duration-300">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                    <ellipse cx="12" cy="5" rx="9" ry="3" />
+                    <path d="M3 5V19c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+                    <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3" />
+                  </svg>
+                </div>
+                <span className="font-mono text-[7px] text-muted-foreground mt-1 group-hover:text-accent transition-colors">SCIKIT-L</span>
+              </div>
+
+              {/* SQL */}
+              <div className="animate-float-2 flex flex-col items-center group cursor-pointer">
+                <div className="w-11 h-11 rounded-xl bg-background border border-border/80 flex items-center justify-center text-foreground hover:border-accent hover:text-accent transition-colors duration-300">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+                    <path d="M14.5 9.5H10v2h4v2h-4.5" />
+                  </svg>
+                </div>
+                <span className="font-mono text-[7px] text-muted-foreground mt-1 group-hover:text-accent transition-colors">SQL</span>
+              </div>
             </div>
           </div>
           
@@ -414,6 +509,7 @@ function Hero({ unlocked }: { unlocked: boolean }) {
             </div>
             <a
               href="#initiate"
+              onClick={(e) => handleSmoothScroll(e, "initiate")}
               className="group inline-flex w-full md:w-auto items-center justify-center gap-3 border border-foreground px-5 py-3 font-mono-tight text-[11px] uppercase tracking-widest text-foreground transition-colors hover:bg-accent hover:text-accent-foreground hover:border-accent"
             >
               Initiate contact
@@ -444,26 +540,63 @@ function FamousQuoteStatementField() {
   );
 }
 
-function StockTicker() {
+// Interactive Floating Hobbies Panel (With relaxed everyday hobbies for Node 03 & 04)
+function HobbiesSection() {
+  const hobbies = [
+    {
+      title: "Group Trip Itinerary Design",
+      desc: "Architecting detailed, multi-day loop routes, optimizing regional travel paths and schedules.",
+      icon: "🗺️",
+      accent: "border-accent/40 bg-accent/5 text-accent",
+    },
+    {
+      title: "National Park Trekking",
+      desc: "Backpacking wilderness elevation passes, charting backcountry maps, and climbing high-altitude peaks.",
+      icon: "🏔️",
+      accent: "border-emerald-500/40 bg-emerald-500/5 text-emerald-400",
+    },
+    {
+      title: "Caffeine Matrix Optimization",
+      desc: "Methodically testing coffee roasts to discover exactly how many cups it takes to see code in real time.",
+      icon: "☕",
+      accent: "border-amber-600/40 bg-amber-600/5 text-amber-500",
+    },
+    {
+      title: "Cinema Timeline Analysis",
+      desc: "Binge-watching complex movie universes or thriller plots and complaining about script plot holes.",
+      icon: "🎬",
+      accent: "border-rose-500/40 bg-rose-500/5 text-rose-400",
+    },
+  ];
+
   return (
-    <div className="w-full bg-black border-y border-accent/20 py-1.5 overflow-hidden font-mono-tight text-[9px] uppercase tracking-[0.1em] text-accent select-none">
-      <div className="flex animate-marquee gap-8 items-center whitespace-nowrap px-4">
-        {[...Array(2)].map((_, i) => (
-          <div key={i} className="flex gap-8 items-center">
-            <span className="text-muted-foreground">// [ LIVE MARKET TELEMETRY — S&P 500 ANALYTICS DECK ]</span>
-            <span>AAPL <span className="text-emerald-400">188.94 [+1.2%]</span></span>
-            <span>NVDA <span className="text-emerald-400">1,114.66 [+3.8%]</span></span>
-            <span>TSLA <span className="text-destructive">175.66 [-0.9%]</span></span>
-            <span>GOOGL <span className="text-emerald-400">178.43 [+1.5%]</span></span>
-            <span>MSFT <span className="text-destructive">429.04 [-0.1%]</span></span>
-            <span>AMZN <span className="text-emerald-400">183.15 [+2.2%]</span></span>
-            <span>META <span className="text-emerald-400">491.50 [+1.9%]</span></span>
-            <span>NFLX <span className="text-emerald-400">639.18 [+1.0%]</span></span>
-            <span className="text-muted-foreground">// [ REFRESH RATE: 15MS ]</span>
-          </div>
-        ))}
+    <section className="relative w-full border-t border-b border-border/40 bg-black/40 py-16 overflow-hidden backdrop-blur-md">
+      <div className="mx-auto max-w-[1400px] px-6 md:px-10 relative z-10">
+        <p className="font-mono-tight text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-6">
+          // OFF-DUTY PROTOCOLS // SYSTEM HOBBIES
+        </p>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {hobbies.map((h, idx) => (
+            <div 
+              key={idx} 
+              className={`group border p-5 rounded-none transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-[0_10px_20px_rgba(0,0,0,0.6)] backdrop-blur-lg ${h.accent}`}
+            >
+              <div className="flex justify-between items-center border-b border-border/30 pb-3 mb-3">
+                <span className="text-xl">{h.icon}</span>
+                <span className="font-mono text-[8px] uppercase tracking-widest text-muted-foreground/60">NODE_0{idx + 1}</span>
+              </div>
+              <h4 className="font-display text-sm font-bold uppercase tracking-tight text-foreground transition-colors group-hover:text-accent">
+                {h.title}
+              </h4>
+              <p className="mt-2 text-xs text-muted-foreground/90 leading-relaxed font-sans">
+                {h.desc}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -651,6 +784,61 @@ const stack = [
   },
 ];
 
+function AcademicPublicationNode() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="mt-12 col-span-12 border-t border-border/40 pt-8 animate-fade-in">
+      <p className="font-mono-tight text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+        // 004 — ACADEMIC RESEARCH & SCHOLASTIC PIPELINE
+      </p>
+      
+      <div className="mt-4 border-2 border-accent/30 bg-black/80 p-6 md:p-8 backdrop-blur-md relative overflow-hidden transition-all duration-300 hover:border-accent shadow-[0_0_15px_rgba(74,222,128,0.1)]">
+        <div className="absolute top-0 right-0 border-l border-b border-accent/30 bg-accent/5 px-3 py-1 font-mono text-[8px] uppercase tracking-widest text-accent font-bold">
+          PEER REVIEWED // INTL JOURNAL
+        </div>
+        
+        <span className="font-mono text-[9px] text-accent tracking-widest font-bold">JOURNAL: IJARESM // GRAPH THEORY & NEURAL HYBRIDS</span>
+        
+        <h3 className="mt-2 font-display text-xl md:text-2xl font-black uppercase tracking-tight text-foreground leading-[1.1] max-w-4xl">
+          Optimizing Minimum Spanning Tree Computation: An Artificial Neural Network Approach for Enhanced Efficiency in Graph Theory
+        </h3>
+        
+        <p className="mt-4 text-xs font-mono-tight text-muted-foreground uppercase tracking-wider">
+          Bhanu Teja Nimmagadda — Lead Author
+        </p>
+
+        <div className="mt-6 flex flex-wrap gap-4 items-center">
+          <button 
+            onClick={() => setIsOpen(!isOpen)}
+            className="border border-accent px-4 py-2 font-mono-tight text-[10px] uppercase tracking-widest text-accent bg-accent/5 transition-all hover:bg-accent hover:text-black font-bold"
+          >
+            {isOpen ? "[ CLOSE SYSTEM ABSTRACT ]" : "[ OPEN SYSTEM ABSTRACT ]"}
+          </button>
+          
+          <a 
+            href="https://www.ijaresm.com/optimizing-minimum-spanning-tree-computation-an-artificial-neural-network-approach-for-enhanced-efficiency-in-graph-theory" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="border border-foreground/50 px-4 py-2 font-mono-tight text-[10px] uppercase tracking-widest text-foreground hover:border-accent hover:text-accent transition-all font-bold"
+          >
+            LAUNCH MANUSCRIPT URL →
+          </a>
+        </div>
+
+        {isOpen && (
+          <div className="mt-6 border-t border-border/40 pt-6 animate-fade-in font-sans">
+            <span className="font-mono text-[9px] uppercase tracking-widest text-accent font-bold block mb-2">[ ABSTRACT DECRYPTED ]</span>
+            <p className="text-xs md:text-sm text-foreground/80 leading-relaxed font-medium">
+              In this research paper, we introduce a novel approach to tackle the Minimum Spanning Tree (MST) problem using Artificial Neural Networks (ANNs). The MST problem is a fundamental challenge within graph theory, holding significant real-world applications. Traditional algorithms for MST problem-solving often demand substantial computational resources and memory usage. Our proposed approach aims to mitigate these limitations by harnessing the capabilities of ANNs, which have demonstrated efficacy in solving a variety of optimization problems. Our ANN-based methodology revolves around training a neural network to predict the edges of the MST for a given input graph. This training involves a dataset of input graphs and their corresponding MSTs. We also introduce a unique loss function that simultaneously considers the accuracy of the predicted MST and the computational efficiency of the neural network. To assess the effectiveness of our approach, we conduct extensive evaluations on diverse benchmark datasets and compare our results with those of state-of-the-art MST algorithms. The experimental outcomes demonstrate that our ANN-based approach yields comparable or superior results to existing algorithms, all the while significantly improving computation time and memory utilization. In summary, our proposed methodology offers a promising solution to the MST problem using ANNs and exhibits potential for extension to other optimization challenges within graph theory.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Stack() {
   return (
     <section id="stack" className="relative border-t border-border bg-background/10 py-24 md:py-32 backdrop-blur-md">
@@ -708,53 +896,10 @@ function Stack() {
           ))}
         </div>
         
-        <LiveAnalyticDashboardsUnlocked idx={4}/>
+        {/* Academic research publication */}
+        <AcademicPublicationNode />
       </div>
     </section>
-  );
-}
-
-function LiveAnalyticDashboardsUnlocked({idx}: {idx:number}){
-  return(
-    <div className="mt-12 col-span-12 border-t border-border/40 pt-8 animate-fade-in group">
-      <p className="font-mono-tight text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-        // 00{idx} — Live analytical FRAME telemetry
-      </p>
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-black/60 border border-border p-4 h-48 backdrop-blur-md relative overflow-hidden group-hover:border-accent transition-colors duration-300">
-          <div className="flex justify-between border-b border-border pb-1.5 mb-2 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
-            <span>[ BI//ANALYTICS FRAME ]</span>
-            <span className="text-emerald-400">ACTIVE</span>
-          </div>
-          <svg viewBox="0 0 100 50" className="w-full h-full text-accent opacity-70 group-hover:opacity-100 transition-opacity">
-            <polyline fill="none" stroke="currentColor" strokeWidth="0.5" points="0,45 10,40 20,43 30,30 40,35 50,15 60,25 70,5 80,18 90,10 100,12" />
-            <polyline fill="none" stroke="currentColor" strokeWidth="0.2" strokeDasharray="1 1" points="0,45 10,43 20,47 30,35 40,40 50,25 60,35 70,18 80,25 90,15 100,16" opacity="0.3" />
-            <path d="M0,45 L10,40 20,43 30,30 40,35 50,15 60,25 70,5 80,18 90,10 100,12 L100,50 0,50 Z" fill="currentColor" opacity="0.05" />
-          </svg>
-          <div className="absolute inset-x-0 bottom-0 p-2 bg-black/60 font-mono text-[8px] uppercase tracking-widest text-foreground">
-            // BI Metrics Drift Audit (Confidential Sector A)
-          </div>
-        </div>
-        <div className="bg-black/60 border border-border p-4 h-48 backdrop-blur-md group-hover:border-accent transition-colors duration-300">
-          <div className="flex justify-between border-b border-border pb-1.5 mb-2 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
-            <span>[ OPERATIONAL FRAME ]</span>
-            <span className="text-emerald-400">ACTIVE</span>
-          </div>
-          <svg viewBox="0 0 100 50" className="w-full h-full text-accent opacity-70 group-hover:opacity-100 transition-opacity">
-            <rect x="5" y="10" width="8" height="35" fill="currentColor" opacity="0.8" />
-            <rect x="18" y="5" width="8" height="40" fill="currentColor" opacity="1" />
-            <rect x="31" y="15" width="8" height="30" fill="currentColor" opacity="0.6" />
-            <rect x="44" y="20" width="8" height="25" fill="currentColor" opacity="0.7" />
-            <rect x="57" y="2" width="8" height="43" fill="currentColor" opacity="1" />
-            <rect x="70" y="18" width="8" height="27" fill="currentColor" opacity="0.5" />
-            <rect x="83" y="12" width="8" height="33" fill="currentColor" opacity="0.8" />
-          </svg>
-          <div className="absolute inset-x-0 bottom-0 p-2 bg-black/60 font-mono text-[8px] uppercase tracking-widest text-foreground">
-            // Cluster Performance audit (Sector D)
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -964,7 +1109,7 @@ function Contact() {
               <span className="text-accent">.</span>
             </h2>
             <p className="mt-6 max-w-sm text-foreground/80">
-              Have complex corporate data waiting to be solved? Share the parameters. I'll build a clear strategy model.
+              Have complex data waiting to be solved? Share the parameters. I'll build a clear strategy model.
             </p>
             <div className="mt-8 space-y-2 font-mono-tight text-xs uppercase tracking-widest text-muted-foreground">
               <p>
@@ -1045,7 +1190,6 @@ function Contact() {
             </div>
           </form>
         </div>
-        <LiveAnalyticDashboardsUnlocked idx={8}/>
       </div>
     </section>
   );
@@ -1057,8 +1201,14 @@ function Footer() {
       <div className="mx-auto flex max-w-[1400px] flex-col items-start justify-between gap-4 px-6 font-mono-tight text-[10px] uppercase tracking-[0.25em] text-muted-foreground md:flex-row md:items-center md:px-10">
         <div>© 2026 — BHANU TEJA / BUSINESS INTEL METRICS ARCHIVED</div>
         <div className="flex gap-6">
-          <a href="#" className="hover:text-accent">GITHUB</a>
-          <a href="#" className="hover:text-accent">LINKEDIN</a>
+          <a 
+            href="https://www.linkedin.com/in/bhanu-teja-n" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="hover:text-accent"
+          >
+            LINKEDIN
+          </a>
           <a href="#" className="hover:text-accent">READ.CV</a>
         </div>
         <div>BUILT IN THE DARK / NO COOKIES</div>
@@ -1079,11 +1229,9 @@ function Index() {
       
       setScrollYPosition(scrolled);
       
-      // Calculate progress on scale 0 to 100
       const progress = Math.min((scrolled / (windowHeight * 0.35)) * 100, 100);
       setScrollProgress(progress);
 
-      // Permanently lock the unlock state to true once the scroll criteria is met
       if (scrolled > windowHeight * 0.35 && !unlocked) {
         setUnlocked(true);
       }
@@ -1093,7 +1241,6 @@ function Index() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [unlocked]);
 
-  // Derived style parameters for the Apple smooth reveal transition layer
   const normalizedProgress = unlocked ? 1 : scrollProgress / 100;
   const contentScale = unlocked ? 1 : 0.92 + normalizedProgress * 0.08;
   const contentBlur = unlocked ? 0 : Math.max(0, 8 - normalizedProgress * 8);
@@ -1102,13 +1249,41 @@ function Index() {
 
   return (
     <main className="min-h-[200vh] bg-background text-foreground lg:cursor-none select-none relative overflow-x-hidden font-sans antialiased text-base selection:bg-accent selection:text-accent-foreground">
+      
+      {/* SCOPED INJECTED CSS ANIMATIONS */}
+      <style>{`
+        @keyframes float-bounce-slow {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-12px) rotate(3deg); }
+        }
+        @keyframes float-bounce-medium {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-8px) rotate(-4deg); }
+        }
+        @keyframes float-bounce-fast {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-10px) rotate(2deg); }
+        }
+        .animate-float-1 {
+          animation: float-bounce-slow 4s ease-in-out infinite;
+        }
+        .animate-float-2 {
+          animation: float-bounce-medium 3.2s ease-in-out infinite;
+        }
+        .animate-float-3 {
+          animation: float-bounce-fast 3.6s ease-in-out infinite;
+        }
+        .animate-float-4 {
+          animation: float-bounce-slow 4.5s ease-in-out infinite;
+        }
+      `}</style>
+
       <InteractiveVectorField scrollY={scrollYPosition} />
       <PixelShardCursor />
       
       <Nav unlocked={unlocked} />
       
       <div className="relative z-10 w-full flex flex-col min-h-screen">
-        {/* Gateway Splash overlay: exists in DOM and fades out smoothly without breaking router mounts */}
         <div 
           className="flex fixed inset-0 flex-col items-center justify-center min-h-screen w-full font-mono text-[11px] uppercase tracking-[0.45em] text-accent transition-all duration-500 z-20 pointer-events-none"
           style={{ 
@@ -1122,7 +1297,6 @@ function Index() {
           </div>
         </div>
 
-        {/* Master Portfolio layer: remains active continuously after a single successful execution */}
         <div 
           className="transition-all ease-out duration-700 origin-center w-full"
           style={{
@@ -1135,9 +1309,9 @@ function Index() {
           <Hero unlocked={unlocked} />
           <Protocol />
           <FamousQuoteStatementField />
-          <StockTicker />
-          <Stack />
+          <HobbiesSection />
           <Works />
+          <Stack />
           <Milestones />
           <Contact />
           <Footer />
