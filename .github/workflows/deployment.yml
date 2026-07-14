@@ -38,7 +38,7 @@ jobs:
       - name: Upload Production Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './.output/public' 
+          path: './.output/public' # <-- Points directly to the static pre-rendered directory
 
       - name: Deploy to GitHub Pages
         id: deployment
