@@ -1,6 +1,6 @@
-/* ✅ Move imports to the absolute top of your CSS file */
+/* ✅ Correct modern Tailwind v4 imports placed strictly at the top */
 @import "tailwindcss";
-@import "tw-animate-css";
+@import "tailwindcss-animate"; 
 
 @source "../src";
 
