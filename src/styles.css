@@ -1,6 +1,5 @@
-/* ✅ Correct modern Tailwind v4 imports placed strictly at the top */
 @import "tailwindcss";
-@import "tailwindcss-animate"; 
+@import "tw-animate-css"; /* ✅ Clean CSS-only import */
 
 @source "../src";
 
