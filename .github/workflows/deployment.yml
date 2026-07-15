@@ -26,10 +26,9 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24' # ✅ Updated to Node 24
 
       - name: Install Dependencies
-        # Using npm install handles the lockfile version mismatches smoothly
         run: npm install --legacy-peer-deps 
 
       - name: Build Project
