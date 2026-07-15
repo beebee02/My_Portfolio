@@ -64,6 +64,5 @@
     "globals": "^15.14.0",
     "typescript": "~5.6.2",
     "vite": "^6.0.5"
-    // ❌ Removed vite-tsconfig-paths here!
   }
 }
